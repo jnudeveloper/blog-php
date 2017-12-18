@@ -7,7 +7,7 @@ use api\models\SignupForm;
 class SignupFormTest extends \Codeception\Test\Unit
 {
     /**
-     * @var \frontend\tests\UnitTester
+     * @var \api\tests\UnitTester
      */
     protected $tester;
 
