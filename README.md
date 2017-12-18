@@ -59,3 +59,6 @@ vendor/                  contains dependent 3rd-party packages
 environments/            contains environment-based overrides
 ```
 # blog-php
+安装流程：  
+1.使用git clone 拉取代码  
+2.在composer.json所在目录下执行命令 “composer install”
