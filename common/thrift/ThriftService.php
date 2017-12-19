@@ -20,7 +20,7 @@ class ThriftService{
     public $service = '';
 
     //返回特定的client,由thrift生成
-    protected $thrift = null;
+    protected $thriftClient = null;
 
     protected $errCode = null;
 
@@ -36,12 +36,12 @@ class ThriftService{
 
         $service = $this->service;
         try{
-            $this->thrift = Yii::$app->thrift->$service;
+            $this->thriftClient = Yii::$app->thriftManager->$service;
 
         }catch(Exception $e){
             $this->errCode = $e->getCode();
             $this->errMsg = $e->getMessage();
-            $this->thrift = null;
+            $this->thriftClient = null;
             Yii::error($this->service.'['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
         }
     }
@@ -118,7 +118,7 @@ class ThriftService{
 
     //调用接口
     public function invoke(){
-        if($this->thrift == NULL){
+        if($this->thriftClient == NULL){
             return False;
         }
         $this->reset();
@@ -126,7 +126,7 @@ class ThriftService{
         $method = array_shift($args);
 
         //取得调用的方法信息
-        $methodInfo = new \ReflectionMethod($this->thrift, $method);
+        $methodInfo = new \ReflectionMethod($this->thriftClient, $method);
         $data = array();
         foreach($methodInfo->getParameters() as $object){
             $data[] = $object->getName();
@@ -147,7 +147,7 @@ class ThriftService{
             return false;
         }
         try{
-            $data = call_user_func_array(array($this->thrift,$method),$args);
+            $data = call_user_func_array(array($this->thriftClient,$method),$args);
         }catch(TTransportException $e){
             $this->errCode = $e->getCode();
             $this->errMsg = $e->getMessage();

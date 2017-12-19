@@ -9,7 +9,7 @@
  */
 
 return [
-    'class'=>'app\components\ThriftClient',
+    'class'=>'app\components\ThriftManager',
     'serviceConfig' => [
         //在此处配置各个client
         //example:
