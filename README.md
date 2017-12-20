@@ -61,4 +61,61 @@ environments/            contains environment-based overrides
 # blog-php
 安装流程：  
 1.使用git clone 拉取代码  
-2.在composer.json所在目录下执行命令 “composer install”
+2.在composer.json所在目录下执行命令 “composer install”    
+
+
+nginx 配置：（具体的目录请根据自己的实际情况设置）
+```
+server {
+    listen       80;
+    server_name  app.blog.com;
+    root   D:\phpStudy\WWW\blog\blog-angular\dist;
+    access_log  D:/phpStudy/log/app.blog.com/access.log;
+    error_log   D:/phpStudy/log/app.blog.com/error.log;
+    index  index.html index.htm;
+    try_files $uri$args $uri$args/ $uri $uri/ /index.html =404;
+   
+}
+server {
+    charset utf-8;
+    client_max_body_size 128M;
+
+    listen 80; ## listen for ipv4
+    #listen [::]:80 default_server ipv6only=on; ## listen for ipv6
+
+    server_name api.blog.com;
+    root        D:\phpStudy\WWW\blog\blog-php\api\web;
+    index       index.php;
+
+    access_log  D:/phpStudy/log/api.blog.com/access.log;
+    error_log   D:/phpStudy/log/api.blog.com/error.log;
+
+    location / {
+        # Redirect everything that isn't a real file to index.php
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    # uncomment to avoid processing of calls to non-existing static files by Yii
+    #location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
+    #    try_files $uri =404;
+    #}
+    #error_page 404 /404.html;
+
+    # deny accessing php files for the /assets directory
+    location ~ ^/assets/.*\.php$ {
+        deny all;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass 127.0.0.1:9000;
+        #fastcgi_pass unix:/var/run/php5-fpm.sock;
+        try_files $uri =404;
+    }
+
+    location ~* /\. {
+        deny all;
+    }
+}
+```
