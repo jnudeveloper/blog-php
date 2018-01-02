@@ -26,7 +26,7 @@ class DataScriptController extends Controller
         for($i = 0; $i < 8; $i++){
             $migration->insert('{{%post}}', [
                 'title' => $title.$i,
-                'abstract' => $abstract.$i,
+                'summary' => $abstract.$i,
                 'content' => $content.$i,
                 'status' => $i % 2,
                 'create_time' => time(),
