@@ -14,7 +14,7 @@ class m171226_033901_create_post_table extends Migration
         $this->createTable('{{%post}}', [
             'id' => 'INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT',
             'title' => 'VARCHAR(256) DEFAULT \'\' COMMENT "文章标题"',
-            'abstract' => 'VARCHAR(512) DEFAULT \'\' COMMENT "摘要"',
+            'summary' => 'VARCHAR(512) DEFAULT \'\' COMMENT "摘要"',
             'content' => 'TEXT COMMENT "文章内容"',
             'status' => 'TINYINT DEFAULT 1 COMMENT "状态，0已删除1草稿2已发布"',
             'create_time' => 'INT(10) DEFAULT 0 COMMENT "创建时间"',
