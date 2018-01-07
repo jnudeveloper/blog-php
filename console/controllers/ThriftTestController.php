@@ -31,13 +31,13 @@ class ThriftTestController extends Controller
             $transport = new TBufferedTransport($socket, 1024, 1024);
             $protocol = new TBinaryProtocol($transport);
 
+            $transport->open();
+
             $additionProtocol = new TMultiplexedProtocol($protocol, "AdditionService");
             $multiplicationProtocol =new TMultiplexedProtocol($protocol, "MultiplicationService");
 
             $additionClient = new AdditionServiceClient($additionProtocol);
             $multiplicationClient = new MultiplicationServiceClient($multiplicationProtocol);
-
-            $transport->open();
 
             $addResult = $additionClient->add(1, 2);
             $multiplicationResult = $multiplicationClient->multiply(2, 3);
