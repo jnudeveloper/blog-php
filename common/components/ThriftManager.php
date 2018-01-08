@@ -24,7 +24,7 @@ class ThriftManager extends Component
     public $sendTimeout = 5;
     public $recvTimeout = 5;
 
-    public $namespacePrefix = 'app\\gen\\';
+    public $namespacePrefix = 'common\\thrift\\gen\\';
     public $singleServiceConnectionConfig = [];
     public $multipleServiceConnectionConfig = [];
 
@@ -111,9 +111,9 @@ class ThriftManager extends Component
             if(isset($this->services['multipleServiceConnection'][$socketStr]['services'][$name])){
                 if(is_string($this->services['multipleServiceConnection'][$socketStr]['services'][$name])){
                     $protocol = $this->getCommonProtocol($socketStr);
-                    $protocol = new TMultiplexedProtocol($protocol, $name);
+                    $multiplexedProtocol = new TMultiplexedProtocol($protocol, $name);
                     $client = $this->namespacePrefix.$config['dirName'].'\\'.$config['className'].'Client';
-                    $this->services['multipleServiceConnection'][$socketStr]['services'][$name] = new $client($protocol);
+                    $this->services['multipleServiceConnection'][$socketStr]['services'][$name] = new $client($multiplexedProtocol);
                 }
                 return $this->services['multipleServiceConnection'][$socketStr]['services'][$name];
             }
@@ -136,11 +136,14 @@ class ThriftManager extends Component
 
             for($i=0;$i<$config['maxConnectTimes'];$i++){
                 try{
-                    $transport = new TSocket($config['serverHost'], $config['serverPort']);
-                    $transport->setSendTimeout($config['sendTimeout']);
-                    $transport->setRecvTimeout($config['recvTimeout']);
+                    $socket = new TSocket($config['serverHost'], $config['serverPort']);
+                    $socket->setSendTimeout($config['sendTimeout']);
+                    $socket->setRecvTimeout($config['recvTimeout']);
+                    $transport = new TBufferedTransport($socket);
+                    $this->services['multipleServiceConnection'][$socketStr]['protocol'] = new TBinaryProtocol($transport);
                     $transport->open();
-                    $this->services['multipleServiceConnection'][$socketStr]['protocol'] = new TBinaryProtocol(new TBufferedTransport($transport));
+                    //这里要不要注册一下shutdown函数
+                    break;
 
                 }catch(TException $e){
                     Yii::error($e->getMessage().'   connection:'.$config['serverHost'].':'.$config['serverPort'], __METHOD__);

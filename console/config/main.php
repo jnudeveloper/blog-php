@@ -30,6 +30,63 @@ return [
                 ],
             ],
         ],
+        'thriftManager' => [
+            'class' => 'common\components\ThriftManager',
+            'multipleServiceConnectionConfig' => [
+                'localhost:7911' => [
+                    'services' => [
+                        'AdditionService' => [
+                            'sendTimeout' => 100,
+                            'recvTimeout' => 100,
+                            'serverHost' => 'localhost',
+                            'serverPort' => 7911,
+                            'dirName' => '',
+                            'maxConnectTimes' => 3,
+                        ],
+                        'MultiplicationService' => [
+                            'sendTimeout' => 100,
+                            'recvTimeout' => 100,
+                            'serverHost' => 'localhost',
+                            'serverPort' => 7911,
+                            'dirName' => '',
+                            'maxConnectTimes' => 3,
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ],
     'params' => $params,
 ];
+/*
+ * common\components\ThriftManager的$services(init后)
+[
+    'singleServiceConnection' => [],
+    'multipleServiceConnection' => [
+        'localhost:7911' => [
+            'protocol' => '',
+            'services' => [
+                'AdditionService' => 'AdditionService',
+                'MultiplicationService' => 'MultiplicationService',
+            ]
+        ],
+    ],
+];
+
+调用一次服务后（例如AdditionService）
+[
+    'singleServiceConnection' => [],
+    'multipleServiceConnection' => [
+        'localhost:7911' => [
+            'protocol' => $binaryProtocol,//common protocol
+            'services' => [
+                'AdditionService' => $client,
+                'MultiplicationService' => 'MultiplicationService',
+            ]
+        ],
+    ],
+];
+
+
+
+*/
