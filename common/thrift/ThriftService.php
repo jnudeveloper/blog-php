@@ -14,10 +14,12 @@ use Yii;
 use Thrift\Exception\TTransportException;
 use Thrift\Exception\TException;
 
-
-class ThriftService{
+abstract class ThriftService{
     //对应后端相应的service名称
     public $service = '';
+
+    //是否使用了多路协议，是则为true，否则为false
+    public $multiplexed = false;
 
     //返回特定的client,由thrift生成
     protected $thriftClient = null;
@@ -28,15 +30,20 @@ class ThriftService{
 
     protected $data = null;
 
-    public function __construct($service=''){
-        $service != '' && $this->service = $service;
-        if($service == '' && $this->service == ''){
+    protected function __construct() {
+        $this->init();
+    }
+
+    //禁止克隆
+    protected final function __clone() {}
+
+    protected function init() {
+        if($this->service == ''){
             throw new Exception('service is invalid', Code::CONF_MISS);
         }
 
-        $service = $this->service;
         try{
-            $this->thriftClient = Yii::$app->thriftManager->$service;
+            $this->thriftClient = Yii::$app->thriftManager->getService($this->service, $this->multiplexed);
 
         }catch(Exception $e){
             $this->errCode = $e->getCode();
@@ -46,8 +53,15 @@ class ThriftService{
         }
     }
 
+    public final static function getInstance() {
+        if(static::$instance === null){
+            static::$instance = new static();
+        }
+        return static::$instance;
+    }
+
     //获取所有数据
-    public function data(){
+    public function getData(){
         return $this->data;
     }
 
@@ -65,16 +79,82 @@ class ThriftService{
         return $this->errMsg;
     }
 
-    //获取检查数据的form model(获取数据检查模型)
-    public function getFormModel($sign=''){
-        return null;
-    }
-
     //重置errCode,errMsg,data
     protected function reset(){
         $this->errCode = null;
         $this->errMsg = '';
         $this->data = null;
+    }
+
+    public function __call($name, $arguments)
+    {
+        $this->reset();
+
+        if($this->invoke($name, $arguments)){
+            return $this->getData();
+        }else{
+            return false;
+        }
+    }
+
+    //调用接口
+    public function invoke($method, $arguments){
+        if($this->thriftClient == null){
+            return false;
+        }
+
+        //取得调用的方法信息
+        $methodInfo = new \ReflectionMethod($this->thriftClient, $method);
+        $data = array();
+        foreach($methodInfo->getParameters() as $object){
+            $data[] = $object->getName();
+        }
+
+        //检验参数是否正确
+        try{
+            $error = call_user_func_array(array($this,'check'), array($method,array_combine($data, $arguments)));
+        }catch(Exception $e){
+            $this->errCode = Code::PARAM_ERR;
+            $this->errMsg = $e->getMessage();
+            return false;
+        }
+
+        if(!empty($error)){
+            $this->errCode = Code::PARAM_ERR;
+            foreach($error as $key=>$value){
+                $this->errMsg != '' && $this->errMsg .= ';';
+                $this->errMsg .= $key.':'.implode(',', $value);
+            }
+            return false;
+        }
+
+        //调用service中的方法
+        try{
+            $this->data = call_user_func_array(array($this->thriftClient,$method),$arguments);
+        }catch(TTransportException $e){
+            $this->errCode = $e->getCode();
+            $this->errMsg = $e->getMessage();
+            Yii::error('TTransportException : '.$this->service.'/'.$method.':'.'['.json_encode($arguments,JSON_UNESCAPED_UNICODE).']['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
+            return false;
+        }catch(TException $e){
+            $this->errCode = $e->getCode();
+            $this->errMsg = $e->getMessage();
+            Yii::error('TException : '.$this->service.'/'.$method.':'.'['.json_encode($arguments,JSON_UNESCAPED_UNICODE).']['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
+            return false;
+        }catch(Exception $e){
+            $this->errCode = $e->getCode();
+            $this->errMsg = $e->getMessage();
+            Yii::error($this->service.'/'.$method.':'.'['.json_encode($arguments,JSON_UNESCAPED_UNICODE).']['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
+            return false;
+        }
+
+        Yii::info($this->service.'/'.$method.':'.'['.json_encode($arguments,JSON_UNESCAPED_UNICODE).']['.json_encode($this->data,JSON_UNESCAPED_UNICODE).']',__METHOD__);
+        return true;
+    }
+
+    //获取检查数据的form model(获取数据检查模型)
+    public function getFormModel($sign=''){
+        return null;
     }
 
     //参数检查
@@ -114,61 +194,6 @@ class ThriftService{
             return $mmethod->getErrors();
         }
         return array();
-    }
-
-    //调用接口
-    public function invoke(){
-        if($this->thriftClient == NULL){
-            return False;
-        }
-        $this->reset();
-        $args = func_get_args();
-        $method = array_shift($args);
-
-        //取得调用的方法信息
-        $methodInfo = new \ReflectionMethod($this->thriftClient, $method);
-        $data = array();
-        foreach($methodInfo->getParameters() as $object){
-            $data[] = $object->getName();
-        }
-        try{
-            $error = call_user_func_array(array($this,'check'), array($method,array_combine($data, $args)));
-        }catch(Exception $e){
-            $this->errCode = Code::PARAM_ERR;
-            $this->errMsg = $e->getMessage();
-            return false;
-        }
-        if(!empty($error)){
-            $this->errCode = Code::PARAM_ERR;
-            foreach($error as $key=>$value){
-                $this->errMsg != '' && $this->errMsg .= ';';
-                $this->errMsg .= $key.':'.implode(',', $value);
-            }
-            return false;
-        }
-        try{
-            $data = call_user_func_array(array($this->thriftClient,$method),$args);
-        }catch(TTransportException $e){
-            $this->errCode = $e->getCode();
-            $this->errMsg = $e->getMessage();
-            Yii::error($this->service.'/'.$method.':'.'['.json_encode($args,JSON_UNESCAPED_UNICODE).']['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
-            return false;
-        }catch(TException $e){
-            $this->errCode = $e->errCode;
-            $this->errMsg = $e->errMsg;
-            Yii::error($this->service.'/'.$method.':'.'['.json_encode($args,JSON_UNESCAPED_UNICODE).']['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
-            return false;
-        }catch(Exception $e){
-            $this->errCode = $e->getCode();
-            $this->errMsg = $e->getMessage();
-            Yii::error($this->service.'/'.$method.':'.'['.json_encode($args,JSON_UNESCAPED_UNICODE).']['.$this->errCode.':'.$this->errMsg.']',__METHOD__);
-            return false;
-        }
-        // TODO 是否转换？ by darkgel
-        //$this->data = G::objectToArray($data);
-        $this->data = $data;//by darkgel
-        Yii::error($this->service.'/'.$method.':'.'['.json_encode($args,JSON_UNESCAPED_UNICODE).']['.json_encode($this->data,JSON_UNESCAPED_UNICODE).']',__METHOD__);
-        return true;
     }
 
 

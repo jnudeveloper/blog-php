@@ -33,8 +33,6 @@ class ThriftManager extends Component
         'multipleServiceConnection' => [],
     ];
 
-    const MULTIPLEXED_PROTOCOL = 2;
-
     public function init()
     {
         foreach($this->singleServiceConnectionConfig as $k => $v)
@@ -48,6 +46,20 @@ class ThriftManager extends Component
                 $this->services['multipleServiceConnection'][$socketStr]['services'][$serviceName] = $serviceName;
             }
         }
+    }
+
+    public function getService($name, $multiplexed = false){
+        if($multiplexed){
+            $service = $this->getMultipleService($name);
+        }else{
+            $service = $this->getSingleService($name);
+        }
+
+        if(!is_null($service)){
+            return $service;
+        }
+
+        throw new Exception('Service Not Defined');
     }
 
     public function __get($name)
@@ -107,12 +119,13 @@ class ThriftManager extends Component
     }
 
     private function getMultipleService($name){
-        foreach ($this->services['multipleServiceConnection'] as $socketStr => $config){
+        foreach ($this->services['multipleServiceConnection'] as $socketStr => $v){
             if(isset($this->services['multipleServiceConnection'][$socketStr]['services'][$name])){
                 if(is_string($this->services['multipleServiceConnection'][$socketStr]['services'][$name])){
                     $protocol = $this->getCommonProtocol($socketStr);
                     $multiplexedProtocol = new TMultiplexedProtocol($protocol, $name);
-                    $client = $this->namespacePrefix.$config['dirName'].'\\'.$config['className'].'Client';
+                    $config = $this->multipleServiceConnectionConfig[$socketStr]['services'][$name];
+                    $client = $this->namespacePrefix.$config['dirPath'].$config['className'].'Client';
                     $this->services['multipleServiceConnection'][$socketStr]['services'][$name] = new $client($multiplexedProtocol);
                 }
                 return $this->services['multipleServiceConnection'][$socketStr]['services'][$name];
@@ -124,8 +137,8 @@ class ThriftManager extends Component
 
     private function getCommonProtocol($socketStr){
         if(is_string($this->services['multipleServiceConnection'][$socketStr]['protocol'])){
-            $config = $this->services['multipleServiceConnection'][$socketStr];
-            $configName = array('sendTimeout', 'recvTimeout', 'serverHost', 'serverPort', 'dirName','maxConnectTimes');
+            $config = $this->multipleServiceConnectionConfig[$socketStr];
+            $configName = array('sendTimeout', 'recvTimeout', 'serverHost', 'serverPort','maxConnectTimes');
             foreach($configName as $cn)
             {
                 if(empty($config[$cn]))
@@ -142,7 +155,7 @@ class ThriftManager extends Component
                     $transport = new TBufferedTransport($socket);
                     $this->services['multipleServiceConnection'][$socketStr]['protocol'] = new TBinaryProtocol($transport);
                     $transport->open();
-                    //这里要不要注册一下shutdown函数
+                    register_shutdown_function(array(&$transport, 'close'));
                     break;
 
                 }catch(TException $e){

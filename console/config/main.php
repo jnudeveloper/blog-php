@@ -30,26 +30,48 @@ return [
                 ],
             ],
         ],
+//        'thriftManager' => [
+//            'class' => 'common\components\ThriftManager',
+//            'multipleServiceConnectionConfig' => [
+//                'localhost:7911' => [
+//                    'services' => [
+//                        'AdditionService' => [
+//                            'sendTimeout' => 100,
+//                            'recvTimeout' => 100,
+//                            'serverHost' => 'localhost',
+//                            'serverPort' => 7911,
+//                            'dirName' => '',
+//                            'maxConnectTimes' => 3,
+//                        ],
+//                        'MultiplicationService' => [
+//                            'sendTimeout' => 100,
+//                            'recvTimeout' => 100,
+//                            'serverHost' => 'localhost',
+//                            'serverPort' => 7911,
+//                            'dirName' => '',
+//                            'maxConnectTimes' => 3,
+//                        ],
+//                    ],
+//                ],
+//            ],
+//        ],
         'thriftManager' => [
             'class' => 'common\components\ThriftManager',
             'multipleServiceConnectionConfig' => [
                 'localhost:7911' => [
+                    'sendTimeout' => 3,
+                    'recvTimeout' => 3,
+                    'serverHost' => 'localhost',
+                    'serverPort' => 7911,
+                    'maxConnectTimes' => 2,
                     'services' => [
                         'AdditionService' => [
-                            'sendTimeout' => 100,
-                            'recvTimeout' => 100,
-                            'serverHost' => 'localhost',
-                            'serverPort' => 7911,
-                            'dirName' => '',
-                            'maxConnectTimes' => 3,
+                            'dirPath' => 'service\\',
+                            'className' => 'AdditionService',
                         ],
                         'MultiplicationService' => [
-                            'sendTimeout' => 100,
-                            'recvTimeout' => 100,
-                            'serverHost' => 'localhost',
-                            'serverPort' => 7911,
-                            'dirName' => '',
-                            'maxConnectTimes' => 3,
+                            'dirPath' => 'service\\',
+                            'className' => 'MultiplicationService',
                         ],
                     ],
                 ],

@@ -8,16 +8,16 @@
 
 namespace console\controllers;
 
-use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TMultiplexedProtocol;
 use Thrift\Transport\TSocket;
-use Thrift\Transport\THttpClient;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Exception\TException;
 use common\thrift\gen\service\AdditionServiceClient;
 use common\thrift\gen\service\MultiplicationServiceClient;
 use yii\console\Controller;
+use common\service\AdditionService;
+use common\service\MultiplicationService;
 
 class ThriftTestController extends Controller
 {
@@ -52,5 +52,14 @@ class ThriftTestController extends Controller
             print 'TException: '.$e->getTraceAsString().'\n';
         }
 
+    }
+
+    public function actionTest1(){
+        $addResult = AdditionService::getInstance()->add(2, 3);
+        print 'result of 2 + 3 : '.$addResult.PHP_EOL;
+
+        $multiResult = MultiplicationService::getInstance()->multiply(2, 3);
+        print 'result of 2 * 3 : '.$multiResult.PHP_EOL;
+        print 'end';
     }
 }
