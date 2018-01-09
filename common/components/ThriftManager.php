@@ -4,7 +4,37 @@
  * User: michael.shi
  * Date: 2017/12/18
  * Time: 19:58
+ *
+ * common\components\ThriftManager的$services(init后)
+ * [
+ *      'singleServiceConnection' => [],
+ *      'multipleServiceConnection' => [
+ *          'localhost:7911' => [
+ *              'protocol' => '',
+ *              'services' => [
+ *                  'AdditionService' => 'AdditionService',
+ *                  'MultiplicationService' => 'MultiplicationService',
+ *              ],
+ *          ],
+ *      ],
+ * ]
+ *
+ * 调用一次服务后（例如AdditionService）
+ * [
+ *      'singleServiceConnection' => [],
+ *      'multipleServiceConnection' => [
+ *          'localhost:7911' => [
+ *              'protocol' => $binaryProtocol,//common protocol
+ *              'services' => [
+ *                  'AdditionService' => $client,
+ *                  'MultiplicationService' => 'MultiplicationService',
+ *              ],
+ *          ],
+ *      ],
+ * ]
+ *
  */
+
 
 namespace common\components;
 
@@ -24,7 +54,7 @@ class ThriftManager extends Component
     public $sendTimeout = 5;
     public $recvTimeout = 5;
 
-    public $namespacePrefix = 'common\\thrift\\gen\\';
+    public $namespacePrefix = '';
     public $singleServiceConnectionConfig = [];
     public $multipleServiceConnectionConfig = [];
 

@@ -48,7 +48,7 @@ return [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-        'thriftManger' => require __DIR__.'/thrift.php',
+        'thriftManager' => require_once __DIR__.'/thrift/thriftManagerConfig.php',
         'urlManager' => [
             'enablePrettyUrl' => true,
             'enableStrictParsing' => true,
