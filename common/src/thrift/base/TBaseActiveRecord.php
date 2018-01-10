@@ -6,7 +6,7 @@
  * Time: 17:12
  */
 
-namespace common\src\thrift\base;
+namespace src\thrift\base;
 
 use Yii;
 use yii\base\InvalidCallException;
@@ -17,10 +17,9 @@ use yii\base\ModelEvent;
 use yii\base\NotSupportedException;
 use yii\base\UnknownMethodException;
 use yii\helpers\ArrayHelper;
-use yii\db\ActiveRecordInterface;
 
 
-abstract class TBaseActiveRecord extends Model implements ActiveRecordInterface
+abstract class TBaseActiveRecord extends Model implements TActiveRecordInterface
 {
     /**
      * @event Event an event that is triggered when the record is initialized via [[init()]].

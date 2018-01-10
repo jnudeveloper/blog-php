@@ -6,7 +6,7 @@
  * Date: 2017/12/29
  * Time: 16:50
  */
-namespace common\src\thrift\base;
+namespace src\thrift\base;
 
 
 class TActiveRecord extends TBaseActiveRecord
@@ -248,12 +248,13 @@ class TActiveRecord extends TBaseActiveRecord
 
     /**
      * @inheritdoc
+     *
      * @return ActiveQuery the newly created [[ActiveQuery]] instance.
      */
-//    public static function find()
-//    {
-//        return Yii::createObject(ActiveQuery::className(), [get_called_class()]);
-//    }
+    public static function find()
+    {
+        return Yii::createObject(ActiveQuery::className(), [get_called_class()]);
+    }
 
     /**
      * Declares the name of the database table associated with this AR class.

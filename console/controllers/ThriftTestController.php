@@ -18,6 +18,8 @@ use thriftgen\service\MultiplicationServiceClient;
 use yii\console\Controller;
 use common\service\AdditionService;
 use common\service\MultiplicationService;
+use thriftgen\domain\Post;
+use thriftgen\domain\Query;
 
 class ThriftTestController extends Controller
 {
@@ -61,5 +63,17 @@ class ThriftTestController extends Controller
         $multiResult = MultiplicationService::getInstance()->multiply(2, 3);
         print 'result of 2 * 3 : '.$multiResult.PHP_EOL;
         print 'end';
+    }
+
+    public function actionPost(){
+        $query = new Query([
+            'where' => [
+                'title' => 'title',
+                'status' => 1
+            ],
+        ]);
+
+        $posts = Post::find($query);
+
     }
 }
