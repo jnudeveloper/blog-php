@@ -8,11 +8,13 @@
 
 namespace console\controllers;
 
+use common\service\PostService;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TMultiplexedProtocol;
 use Thrift\Transport\TSocket;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Exception\TException;
+use thriftgen\domain\TQuery;
 use thriftgen\service\AdditionServiceClient;
 use thriftgen\service\MultiplicationServiceClient;
 use yii\console\Controller;
@@ -73,7 +75,9 @@ class ThriftTestController extends Controller
             ],
         ]);
 
-        //$posts = Post::find($query);
+        $result = PostService::getInstance()->find($query->format());
+
+        var_dump($result);
 
     }
 }

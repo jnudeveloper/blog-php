@@ -22,7 +22,7 @@ class Query extends Component implements QueryInterface
      * This is used to construct the SELECT clause in a SQL statement. If not set, it means selecting all columns.
      * @see select()
      */
-    public $select;
+    public $select = ["*"];
     /**
      * @var string additional option that should be appended to the 'SELECT' keyword. For example,
      * in MySQL, the option 'SQL_CALC_FOUND_ROWS' can be used.

@@ -15,4 +15,8 @@ return [
         'dirPath' => 'service\\',
         'className' => 'MultiplicationService',
     ],
+    'PostService' => [
+        'dirPath' => 'service\\',
+        'className' => 'PostService',
+    ],
 ];
