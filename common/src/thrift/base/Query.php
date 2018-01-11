@@ -10,42 +10,9 @@ namespace src\thrift\base;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
+use yii\db\Expression;
+use thriftgen\domain\TQuery;
 
-/**
- * Query represents a SELECT SQL statement in a way that is independent of DBMS.
- *
- * Query provides a set of methods to facilitate the specification of different clauses
- * in a SELECT statement. These methods can be chained together.
- *
- * By calling [[createCommand()]], we can get a [[Command]] instance which can be further
- * used to perform/execute the DB query against a database.
- *
- * For example,
- *
- * ```php
- * $query = new Query;
- * // compose the query
- * $query->select('id, name')
- *     ->from('user')
- *     ->limit(10);
- * // build and execute the query
- * $rows = $query->all();
- * // alternatively, you can create DB command and execute it
- * $command = $query->createCommand();
- * // $command->sql returns the actual SQL
- * $rows = $command->queryAll();
- * ```
- *
- * Query internally uses the [[QueryBuilder]] class to generate the SQL statement.
- *
- * A more detailed usage guide on how to work with Query can be found in the [guide article on Query Builder](guide:db-query-builder).
- *
- * @property string[] $tablesUsedInFrom Table names indexed by aliases. This property is read-only.
- *
- * @author Qiang Xue <qiang.xue@gmail.com>
- * @author Carsten Brandt <mail@cebe.cc>
- * @since 2.0
- */
 class Query extends Component implements QueryInterface
 {
     use QueryTrait;
@@ -113,347 +80,6 @@ class Query extends Component implements QueryInterface
      * For example, `[':name' => 'Dan', ':age' => 31]`.
      */
     public $params = [];
-
-
-    /**
-     * Creates a DB command that can be used to execute this query.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return Command the created DB command instance.
-     */
-    public function createCommand($db = null)
-    {
-        if ($db === null) {
-            $db = Yii::$app->getDb();
-        }
-        list($sql, $params) = $db->getQueryBuilder()->build($this);
-
-        return $db->createCommand($sql, $params);
-    }
-
-    /**
-     * Prepares for building SQL.
-     * This method is called by [[QueryBuilder]] when it starts to build SQL from a query object.
-     * You may override this method to do some final preparation work when converting a query into a SQL statement.
-     * @param QueryBuilder $builder
-     * @return $this a prepared query instance which will be used by [[QueryBuilder]] to build the SQL
-     */
-    public function prepare($builder)
-    {
-        return $this;
-    }
-
-    /**
-     * Starts a batch query.
-     *
-     * A batch query supports fetching data in batches, which can keep the memory usage under a limit.
-     * This method will return a [[BatchQueryResult]] object which implements the [[\Iterator]] interface
-     * and can be traversed to retrieve the data in batches.
-     *
-     * For example,
-     *
-     * ```php
-     * $query = (new Query)->from('user');
-     * foreach ($query->batch() as $rows) {
-     *     // $rows is an array of 100 or fewer rows from user table
-     * }
-     * ```
-     *
-     * @param int $batchSize the number of records to be fetched in each batch.
-     * @param Connection $db the database connection. If not set, the "db" application component will be used.
-     * @return BatchQueryResult the batch query result. It implements the [[\Iterator]] interface
-     * and can be traversed to retrieve the data in batches.
-     */
-    public function batch($batchSize = 100, $db = null)
-    {
-        return Yii::createObject([
-            'class' => BatchQueryResult::className(),
-            'query' => $this,
-            'batchSize' => $batchSize,
-            'db' => $db,
-            'each' => false,
-        ]);
-    }
-
-    /**
-     * Starts a batch query and retrieves data row by row.
-     *
-     * This method is similar to [[batch()]] except that in each iteration of the result,
-     * only one row of data is returned. For example,
-     *
-     * ```php
-     * $query = (new Query)->from('user');
-     * foreach ($query->each() as $row) {
-     * }
-     * ```
-     *
-     * @param int $batchSize the number of records to be fetched in each batch.
-     * @param Connection $db the database connection. If not set, the "db" application component will be used.
-     * @return BatchQueryResult the batch query result. It implements the [[\Iterator]] interface
-     * and can be traversed to retrieve the data in batches.
-     */
-    public function each($batchSize = 100, $db = null)
-    {
-        return Yii::createObject([
-            'class' => BatchQueryResult::className(),
-            'query' => $this,
-            'batchSize' => $batchSize,
-            'db' => $db,
-            'each' => true,
-        ]);
-    }
-
-    /**
-     * Executes the query and returns all results as an array.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return array the query results. If the query results in nothing, an empty array will be returned.
-     */
-    public function all($db = null)
-    {
-        if ($this->emulateExecution) {
-            return [];
-        }
-        $rows = $this->createCommand($db)->queryAll();
-        return $this->populate($rows);
-    }
-
-    /**
-     * Converts the raw query results into the format as specified by this query.
-     * This method is internally used to convert the data fetched from database
-     * into the format as required by this query.
-     * @param array $rows the raw query result from database
-     * @return array the converted query result
-     */
-    public function populate($rows)
-    {
-        if ($this->indexBy === null) {
-            return $rows;
-        }
-        $result = [];
-        foreach ($rows as $row) {
-            if (is_string($this->indexBy)) {
-                $key = $row[$this->indexBy];
-            } else {
-                $key = call_user_func($this->indexBy, $row);
-            }
-            $result[$key] = $row;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Executes the query and returns a single row of result.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return array|bool the first row (in terms of an array) of the query result. False is returned if the query
-     * results in nothing.
-     */
-    public function one($db = null)
-    {
-        if ($this->emulateExecution) {
-            return false;
-        }
-
-        return $this->createCommand($db)->queryOne();
-    }
-
-    /**
-     * Returns the query result as a scalar value.
-     * The value returned will be the first column in the first row of the query results.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return string|null|false the value of the first column in the first row of the query result.
-     * False is returned if the query result is empty.
-     */
-    public function scalar($db = null)
-    {
-        if ($this->emulateExecution) {
-            return null;
-        }
-
-        return $this->createCommand($db)->queryScalar();
-    }
-
-    /**
-     * Executes the query and returns the first column of the result.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return array the first column of the query result. An empty array is returned if the query results in nothing.
-     */
-    public function column($db = null)
-    {
-        if ($this->emulateExecution) {
-            return [];
-        }
-
-        if ($this->indexBy === null) {
-            return $this->createCommand($db)->queryColumn();
-        }
-
-        if (is_string($this->indexBy) && is_array($this->select) && count($this->select) === 1) {
-            if (strpos($this->indexBy, '.') === false && count($tables = $this->getTablesUsedInFrom()) > 0) {
-                $this->select[] = key($tables) . '.' . $this->indexBy;
-            } else {
-                $this->select[] = $this->indexBy;
-            }
-        }
-        $rows = $this->createCommand($db)->queryAll();
-        $results = [];
-        foreach ($rows as $row) {
-            $value = reset($row);
-
-            if ($this->indexBy instanceof \Closure) {
-                $results[call_user_func($this->indexBy, $row)] = $value;
-            } else {
-                $results[$row[$this->indexBy]] = $value;
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Returns the number of records.
-     * @param string $q the COUNT expression. Defaults to '*'.
-     * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given (or null), the `db` application component will be used.
-     * @return int|string number of records. The result may be a string depending on the
-     * underlying database engine and to support integer values higher than a 32bit PHP integer can handle.
-     */
-    public function count($q = '*', $db = null)
-    {
-        if ($this->emulateExecution) {
-            return 0;
-        }
-
-        return $this->queryScalar("COUNT($q)", $db);
-    }
-
-    /**
-     * Returns the sum of the specified column values.
-     * @param string $q the column name or expression.
-     * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the sum of the specified column values.
-     */
-    public function sum($q, $db = null)
-    {
-        if ($this->emulateExecution) {
-            return 0;
-        }
-
-        return $this->queryScalar("SUM($q)", $db);
-    }
-
-    /**
-     * Returns the average of the specified column values.
-     * @param string $q the column name or expression.
-     * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the average of the specified column values.
-     */
-    public function average($q, $db = null)
-    {
-        if ($this->emulateExecution) {
-            return 0;
-        }
-
-        return $this->queryScalar("AVG($q)", $db);
-    }
-
-    /**
-     * Returns the minimum of the specified column values.
-     * @param string $q the column name or expression.
-     * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the minimum of the specified column values.
-     */
-    public function min($q, $db = null)
-    {
-        return $this->queryScalar("MIN($q)", $db);
-    }
-
-    /**
-     * Returns the maximum of the specified column values.
-     * @param string $q the column name or expression.
-     * Make sure you properly [quote](guide:db-dao#quoting-table-and-column-names) column names in the expression.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return mixed the maximum of the specified column values.
-     */
-    public function max($q, $db = null)
-    {
-        return $this->queryScalar("MAX($q)", $db);
-    }
-
-    /**
-     * Returns a value indicating whether the query result contains any row of data.
-     * @param Connection $db the database connection used to generate the SQL statement.
-     * If this parameter is not given, the `db` application component will be used.
-     * @return bool whether the query result contains any row of data.
-     */
-    public function exists($db = null)
-    {
-        if ($this->emulateExecution) {
-            return false;
-        }
-        $command = $this->createCommand($db);
-        $params = $command->params;
-        $command->setSql($command->db->getQueryBuilder()->selectExists($command->getSql()));
-        $command->bindValues($params);
-        return (bool) $command->queryScalar();
-    }
-
-    /**
-     * Queries a scalar value by setting [[select]] first.
-     * Restores the value of select to make this query reusable.
-     * @param string|Expression $selectExpression
-     * @param Connection|null $db
-     * @return bool|string
-     */
-    protected function queryScalar($selectExpression, $db)
-    {
-        if ($this->emulateExecution) {
-            return null;
-        }
-
-        if (
-            !$this->distinct
-            && empty($this->groupBy)
-            && empty($this->having)
-            && empty($this->union)
-        ) {
-            $select = $this->select;
-            $order = $this->orderBy;
-            $limit = $this->limit;
-            $offset = $this->offset;
-
-            $this->select = [$selectExpression];
-            $this->orderBy = null;
-            $this->limit = null;
-            $this->offset = null;
-            $command = $this->createCommand($db);
-
-            $this->select = $select;
-            $this->orderBy = $order;
-            $this->limit = $limit;
-            $this->offset = $offset;
-
-            return $command->queryScalar();
-        }
-
-        return (new self())
-            ->select([$selectExpression])
-            ->from(['c' => $this])
-            ->createCommand($db)
-            ->queryScalar();
-    }
 
     /**
      * Returns table names used in [[from]] indexed by aliases.
@@ -1133,7 +759,6 @@ PATTERN;
             'limit' => $from->limit,
             'offset' => $from->offset,
             'orderBy' => $from->orderBy,
-            'indexBy' => $from->indexBy,
             'select' => $from->select,
             'selectOption' => $from->selectOption,
             'distinct' => $from->distinct,
@@ -1144,5 +769,29 @@ PATTERN;
             'union' => $from->union,
             'params' => $from->params,
         ]);
+    }
+
+
+    /**
+     * @return TQuery
+    */
+    public function format(){
+        //在这里做json转换
+        $tQuery = new TQuery();
+        $tQuery->where = json_encode($this->where);
+        $tQuery->limit = $this->limit;
+        $tQuery->offset = $this->offset;
+        $tQuery->orderBy = $this->orderBy;
+        $tQuery->select = $this->select;
+        $tQuery->selectOption = $this->selectOption;
+        $tQuery->distinct = $this->distinct;
+        $tQuery->fromTable = $this->from;
+        $tQuery->groupBy = $this->groupBy;
+        $tQuery->join = json_encode($this->join);
+        $tQuery->having = json_encode($this->join);
+        $tQuery->unions = json_encode($this->union);
+        $tQuery->params = $this->params;
+
+        return $tQuery;
     }
 }

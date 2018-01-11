@@ -18,8 +18,8 @@ use thriftgen\service\MultiplicationServiceClient;
 use yii\console\Controller;
 use common\service\AdditionService;
 use common\service\MultiplicationService;
-use thriftgen\domain\Post;
-use thriftgen\domain\Query;
+use console\models\Post;
+use src\thrift\base\Query;
 
 class ThriftTestController extends Controller
 {
@@ -73,7 +73,7 @@ class ThriftTestController extends Controller
             ],
         ]);
 
-        $posts = Post::find($query);
+        //$posts = Post::find($query);
 
     }
 }
