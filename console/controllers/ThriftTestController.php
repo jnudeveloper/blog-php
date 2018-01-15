@@ -80,4 +80,10 @@ class ThriftTestController extends Controller
         var_dump($result);
 
     }
+
+    public function actionGetPost(){
+        $result = PostService::getInstance()->findByID(1);
+
+        var_dump($result);
+    }
 }
