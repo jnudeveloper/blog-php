@@ -14,7 +14,7 @@ use Thrift\Protocol\TMultiplexedProtocol;
 use Thrift\Transport\TSocket;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Exception\TException;
-use thriftgen\domain\TQuery;
+use thriftgen\domain\Request;
 use thriftgen\service\AdditionServiceClient;
 use thriftgen\service\MultiplicationServiceClient;
 use yii\console\Controller;
@@ -58,15 +58,6 @@ class ThriftTestController extends Controller
 
     }
 
-    public function actionTest1(){
-        $addResult = AdditionService::getInstance()->add(2, 3);
-        print 'result of 2 + 3 : '.$addResult.PHP_EOL;
-
-        $multiResult = MultiplicationService::getInstance()->multiply(2, 3);
-        print 'result of 2 * 3 : '.$multiResult.PHP_EOL;
-        print 'end';
-    }
-
     public function actionPost(){
         $query = new Query([
             'where' => [
@@ -82,8 +73,21 @@ class ThriftTestController extends Controller
     }
 
     public function actionGetPost(){
-        $result = PostService::getInstance()->findByID(1);
+        $request = new Request();
+        $request->clientIp = 123;
+        $request->appId = 1;
+        $request->appKey = '123';
+        $request->requestId = '321';
+        $request->requestTime = time();
+
+        $request->data = json_encode([
+            'id' => 1
+        ]);
+
+        $result = PostService::getInstance()->findById($request);
 
         var_dump($result);
     }
+
+
 }
