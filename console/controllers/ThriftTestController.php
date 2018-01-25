@@ -15,8 +15,8 @@ use Thrift\Transport\TSocket;
 use Thrift\Transport\TBufferedTransport;
 use Thrift\Exception\TException;
 use thriftgen\domain\Request;
-use thriftgen\service\AdditionServiceClient;
-use thriftgen\service\MultiplicationServiceClient;
+//use thriftgen\service\AdditionServiceClient;
+//use thriftgen\service\MultiplicationServiceClient;
 use yii\console\Controller;
 use common\service\AdditionService;
 use common\service\MultiplicationService;
@@ -31,25 +31,25 @@ class ThriftTestController extends Controller
         }
 
         try{
-            $socket = new TSocket('localhost', 7911);
-            $transport = new TBufferedTransport($socket, 1024, 1024);
-            $protocol = new TBinaryProtocol($transport);
-
-            $transport->open();
-
-            $additionProtocol = new TMultiplexedProtocol($protocol, "AdditionService");
-            $multiplicationProtocol =new TMultiplexedProtocol($protocol, "MultiplicationService");
-
-            $additionClient = new AdditionServiceClient($additionProtocol);
-            $multiplicationClient = new MultiplicationServiceClient($multiplicationProtocol);
-
-            $addResult = $additionClient->add(1, 2);
-            $multiplicationResult = $multiplicationClient->multiply(2, 3);
-
-            print "the result of 1 + 2 : ".$addResult.PHP_EOL;
-            print "the result of 2 * 3 : ".$multiplicationResult.PHP_EOL;
-
-            $transport->close();
+//            $socket = new TSocket('localhost', 7911);
+//            $transport = new TBufferedTransport($socket, 1024, 1024);
+//            $protocol = new TBinaryProtocol($transport);
+//
+//            $transport->open();
+//
+//            $additionProtocol = new TMultiplexedProtocol($protocol, "AdditionService");
+//            $multiplicationProtocol =new TMultiplexedProtocol($protocol, "MultiplicationService");
+//
+//            $additionClient = new AdditionServiceClient($additionProtocol);
+//            $multiplicationClient = new MultiplicationServiceClient($multiplicationProtocol);
+//
+//            $addResult = $additionClient->add(1, 2);
+//            $multiplicationResult = $multiplicationClient->multiply(2, 3);
+//
+//            print "the result of 1 + 2 : ".$addResult.PHP_EOL;
+//            print "the result of 2 * 3 : ".$multiplicationResult.PHP_EOL;
+//
+//            $transport->close();
 
         } catch (TException $e){
             print 'TException：'.$e->getMessage().'\n';
@@ -73,18 +73,13 @@ class ThriftTestController extends Controller
     }
 
     public function actionGetPost(){
-        $request = new Request();
-        $request->clientIp = 123;
-        $request->appId = 1;
-        $request->appKey = '123';
-        $request->requestId = '321';
-        $request->requestTime = time();
+        $result = PostService::findById(3);
 
-        $request->data = json_encode([
-            'id' => 1
-        ]);
+        var_dump($result);
+    }
 
-        $result = PostService::getInstance()->findById($request);
+    public function actionGetPosts(){
+        $result = PostService::findAll();
 
         var_dump($result);
     }

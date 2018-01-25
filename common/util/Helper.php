@@ -10,7 +10,7 @@
  */
 
 namespace common\util;
-
+use Yii;
 
 class Helper
 {

@@ -21,4 +21,30 @@ class PostService extends ThriftService
     //是否使用了多路协议，是则为true，否则为false
     public $multiplexed = true;
 
+    /**
+     * 根据id获取相应的post
+     * @param int $id post id
+     * @return false|array
+     */
+    public static function findById($id){
+        $request = self::getRequest();
+        $request->version = "0.0.1";
+        $request->data = json_encode([
+            'id' => $id
+        ]);
+
+        return self::call('findById', $request, __METHOD__);
+    }
+
+    /**
+     * 获取所有的post
+     * @return false|array
+     */
+    public static function findAll(){
+        $request = self::getRequest();
+        $request->version = "0.0.1";
+
+        return self::call('findAll', $request, __METHOD__);
+    }
+
 }
