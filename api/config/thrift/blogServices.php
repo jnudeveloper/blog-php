@@ -7,12 +7,8 @@
  */
 
 return [
-    'AdditionService' => [
+    'PostService' => [
         'dirPath' => 'service\\',
-        'className' => 'AdditionService',
-    ],
-    'MultiplicationService' => [
-        'dirPath' => 'service\\',
-        'className' => 'MultiplicationService',
+        'className' => 'PostService',
     ],
 ];

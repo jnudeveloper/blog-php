@@ -11,8 +11,8 @@ return [
     'namespacePrefix' => 'thriftgen\\',
     'multipleServiceConnectionConfig' => [
         'localhost:7911' => [
-            'sendTimeout' => 3,
-            'recvTimeout' => 3,
+            'sendTimeout' => 20,
+            'recvTimeout' => 20,
             'serverHost' => 'localhost',
             'serverPort' => 7911,
             'maxConnectTimes' => 2,

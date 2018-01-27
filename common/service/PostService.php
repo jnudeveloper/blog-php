@@ -7,6 +7,8 @@
  */
 
 namespace common\service;
+
+use Yii;
 use common\thrift\ThriftService;
 
 
@@ -28,9 +30,9 @@ class PostService extends ThriftService
      */
     public static function findById($id){
         $request = self::getRequest();
-        $request->version = "0.0.1";
+        $request->version = Yii::$app->params['thriftCommonVersion'];
         $request->data = json_encode([
-            'id' => $id
+            'id' => $id,
         ]);
 
         return self::call('findById', $request, __METHOD__);
@@ -42,9 +44,26 @@ class PostService extends ThriftService
      */
     public static function findAll(){
         $request = self::getRequest();
-        $request->version = "0.0.1";
+        $request->version = Yii::$app->params['thriftCommonVersion'];
 
         return self::call('findAll', $request, __METHOD__);
+    }
+
+    /**
+     * 获取post ，带分页
+     * @param int $currentPage 页码
+     * @param int $pageSize 每页的数据量
+     * @return false|array
+     */
+    public static function getPostsWithPagination($currentPage, $pageSize){
+        $request = self::getRequest();
+        $request->version = Yii::$app->params['thriftCommonVersion'];
+        $request->data = json_encode([
+            'currentPage' => $currentPage,
+            'pageSize' => $pageSize,
+        ]);
+
+        return self::call('getPostsWithPagination', $request, __METHOD__);
     }
 
 }

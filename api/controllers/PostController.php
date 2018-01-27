@@ -8,24 +8,28 @@
 
 namespace api\controllers;
 
-use yii\rest\ActiveController;
-use yii\data\ActiveDataProvider;
-use common\models\Post;
+use src\data\ArrayDataProvider;
 use yii\rest\Controller;//如果resource不是ActiveRecord的话就使用这个
+use api\models\thrift\Post;
 
-class PostController extends ActiveController
+class PostController extends Controller
 {
-    public $modelClass = 'common\models\Post';
-
     public $serializer = [
-        'class' => 'yii\rest\Serializer',
+        'class' => 'src\rest\Serializer',
         'collectionEnvelope' => 'items',
     ];
 
-    public function actionIndex()
-    {
-        return new ActiveDataProvider([
-            'query' => Post::find(),
+    public function actionIndex(){
+        $posts = Post::getAllPosts();
+
+        return new ArrayDataProvider([
+            'allModels' => $posts,
         ]);
+    }
+
+    public function actionView($id){
+        $post = Post::getPost($id);
+
+        return $post;
     }
 }
